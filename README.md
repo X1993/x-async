@@ -7,12 +7,12 @@
 
 ## 目录结构
 ```bash
-|-- xasyc-spring-boot-starter             ➜ 核心模块,默认基于内存实现任务的非持久化和重试
-|-- xasyc-rocketmq-spring-boot-starter    ➜ 基于rocketmq实现任务的持久化和重试
-|-- xasyc-demo                            ➜ 演示服务
+|-- xasync-spring-boot-starter             ➜ 核心模块,默认基于内存实现任务的非持久化和重试
+|-- xasync-rocketmq-spring-boot-starter    ➜ 基于rocketmq实现任务的持久化和重试
+|-- xasync-demo                            ➜ 演示服务
 ```
 
-[xasyc-spring-boot-starter快速开始](./xasyc-spring-boot-starter)
+[xasync-spring-boot-starter快速开始](./xasync-spring-boot-starter)
 
 
-[xasyc-spring-boot-starter快速开始](./xasyc-rocketmq-spring-boot-starter)
+[xasync-rocketmq-spring-boot-starter快速开始](./xasync-rocketmq-spring-boot-starter)
