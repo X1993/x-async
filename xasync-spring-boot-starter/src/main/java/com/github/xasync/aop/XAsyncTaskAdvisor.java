@@ -1,6 +1,7 @@
 package com.github.xasync.aop;
 
 import com.github.xasync.TaskMateData;
+import com.github.xasync.TaskSubmitParam;
 import com.github.xasync.XAsyncContent;
 import com.github.xasync.XAsyncTaskExecutor;
 import com.github.xasync.exception.IllegalTaskException;
@@ -36,7 +37,7 @@ public class XAsyncTaskAdvisor extends DefaultPointcutAdvisor implements MethodI
             @Override
             public boolean matches(Method method, Class<?> targetClass)
             {
-                return AnnotatedElementUtils.findMergedAnnotation(method ,XAsync.class) != null;
+                return AnnotatedElementUtils.findMergedAnnotation(method , XAsync.class) != null;
             }
         });
         setAdvice(this);
@@ -83,9 +84,10 @@ public class XAsyncTaskAdvisor extends DefaultPointcutAdvisor implements MethodI
                 .setBeanName(beanName)
                 .setMethodName(method.getName())
                 .setPvs(pvs)
-                .setTaskId(taskId);
+                .setTaskId(taskId)
+                .setStrategy(xAsync.strategy());
 
-        xAsyncTaskExecutor.submit(taskMateData ,xAsync.trySync());
+        xAsyncTaskExecutor.submit(taskMateData ,new TaskSubmitParam().setTrySync(xAsync.trySync()));
         return null;
     }
 

@@ -14,6 +14,7 @@ import java.io.ObjectOutputStream;
 import java.text.MessageFormat;
 import java.util.Objects;
 
+import static com.github.xasync.strategy.rocketmq.RocketMqXAsyncTaskConfiguration.ROCKETMQ;
 import static com.github.xasync.strategy.rocketmq.RocketMqXAsyncTaskConfiguration.SERIALIZABLE_CHARSET;
 
 /**
@@ -27,10 +28,20 @@ public class RocketMqXAsyncTaskStorage implements XAsyncTaskStorage {
 
     private RocketMQTemplate rocketMQTemplate;
 
-    public RocketMqXAsyncTaskStorage(RocketMQTemplate rocketMQTemplate)
+    private RocketMqXAsyncTaskProperties rocketMqXAsyncTaskProperties;
+
+    public RocketMqXAsyncTaskStorage(RocketMQTemplate rocketMQTemplate ,
+                                     RocketMqXAsyncTaskProperties rocketMqXAsyncTaskProperties)
     {
         Objects.requireNonNull(rocketMQTemplate);
+        Objects.requireNonNull(rocketMqXAsyncTaskProperties);
         this.rocketMQTemplate = rocketMQTemplate;
+        this.rocketMqXAsyncTaskProperties = rocketMqXAsyncTaskProperties;
+    }
+
+    @Override
+    public String code() {
+        return ROCKETMQ;
     }
 
     @Override
@@ -41,18 +52,16 @@ public class RocketMqXAsyncTaskStorage implements XAsyncTaskStorage {
              ObjectOutputStream out = new ObjectOutputStream(byteArrayOutputStream)){
             //之所以使用java原生序列化是考虑到可以兼容泛型参数,例如 参数类型为 List<User>
             out.writeObject(taskMateData);
-            //必须是ISO-8859-1
             messageContent = byteArrayOutputStream.toString(SERIALIZABLE_CHARSET);
         } catch (IOException e) {
             throw new TaskSaveException(MessageFormat.format("异常任务序列化失败,{0}" ,taskMateData) ,e);
         }
 
-        SendResult sendResult = rocketMQTemplate.syncSend(RocketMqXAsyncTaskProperties.TOPIC
-                + ":" + RocketMqXAsyncTaskProperties.TAG, messageContent);
+        SendResult sendResult = rocketMQTemplate.syncSend(rocketMqXAsyncTaskProperties.getDestination(), messageContent);
 
         if (sendResult.getSendStatus() == SendStatus.SEND_OK){
-            log.debug("推送异步任务信息到mq,topic:【{}】,tag:【{}】,{}" , RocketMqXAsyncTaskProperties.TOPIC ,
-                    RocketMqXAsyncTaskProperties.TAG ,JSON.toJSON(taskMateData));
+            log.debug("推送异步任务信息到mq,destination:【{}】,{}" ,
+                    rocketMqXAsyncTaskProperties.getDestination() ,JSON.toJSON(taskMateData));
         }else {
             throw new TaskSaveException(MessageFormat.format("异步任务消息推送失败,{0}" ,taskMateData));
         }

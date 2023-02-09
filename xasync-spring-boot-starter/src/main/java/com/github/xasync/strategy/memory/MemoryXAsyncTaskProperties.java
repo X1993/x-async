@@ -3,7 +3,8 @@ package com.github.xasync.strategy.memory;
 import lombok.Data;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+
+import static com.github.xasync.strategy.memory.MemoryXAsyncTaskConfiguration.X_ASYNC_MEMORY_STRATEGY_CONFIG;
 
 /**
  * @author X1993
@@ -11,8 +12,7 @@ import org.springframework.context.annotation.Configuration;
  * @description
  */
 @Data
-@Configuration
-@ConfigurationProperties(MemoryXAsyncTaskConfiguration.X_ASYNC_MEMORY_STRATEGY_CONFIG)
+@ConfigurationProperties(X_ASYNC_MEMORY_STRATEGY_CONFIG)
 @ConditionalOnBean(MemoryXAsyncTaskManager.class)
 public class MemoryXAsyncTaskProperties {
 
@@ -22,7 +22,7 @@ public class MemoryXAsyncTaskProperties {
     private long initialDelayMS = 100L;
 
     /**
-     * 异步任务重试间隔，单位毫秒
+     * 异步重试间隔，单位毫秒
      */
     private long periodMS = 5L * 60 * 1000;
 

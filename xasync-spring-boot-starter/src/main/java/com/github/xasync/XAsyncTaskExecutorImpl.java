@@ -12,7 +12,10 @@ import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Method;
 import java.text.MessageFormat;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 异常任务执行器
@@ -25,38 +28,55 @@ public class XAsyncTaskExecutorImpl implements XAsyncTaskExecutor, ApplicationCo
 
     private ApplicationContext applicationContext;
 
-    private XAsyncTaskStorage asyncTaskStorage;
+    private Map<String , XAsyncTaskStorage> asyncTaskStorageMap;
 
     private TaskExecuteExceptionHandler exceptionHandler;
+
+    private XAsyncTaskProperties xAsyncTaskProperties;
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException
     {
         this.applicationContext = applicationContext;
-        this.asyncTaskStorage = applicationContext.getBean(XAsyncTaskStorage.class);
+        //XAsyncTaskStorage实现中可能会使用到这个类，避免构造函数循环引用
+        this.asyncTaskStorageMap = applicationContext.getBeansOfType(XAsyncTaskStorage.class).values()
+                .stream()
+                .collect(Collectors.toMap(XAsyncTaskStorage::code ,Function.identity()));
         this.exceptionHandler = applicationContext.getBean(TaskExecuteExceptionHandler.class);
+        this.xAsyncTaskProperties = applicationContext.getBean(XAsyncTaskProperties.class);
     }
 
     @Override
-    public void submit(TaskMateData taskMateData, boolean trySync) throws IllegalTaskException
+    public void submit(TaskMateData taskMateData, TaskSubmitParam submitParam) throws IllegalTaskException
     {
         if (StringUtils.isEmpty(taskMateData.getTaskId())){
             taskMateData.setTaskId(UUID.randomUUID().toString());
         }
 
-        if (trySync){
+        if (submitParam.isTrySync()){
             try {
                 execute(taskMateData);
             } catch (TaskExecuteException e){
-                asyncTaskStorage.save(taskMateData);
+                XAsyncTaskStorage xAsyncTaskStorage = getXAsyncTaskStorage(taskMateData.getStrategy());
+                xAsyncTaskStorage.save(taskMateData);
             }
         }else {
-            asyncTaskStorage.save(taskMateData);
+            XAsyncTaskStorage xAsyncTaskStorage = getXAsyncTaskStorage(taskMateData.getStrategy());
+            xAsyncTaskStorage.save(taskMateData);
         }
     }
 
+    private XAsyncTaskStorage getXAsyncTaskStorage(String strategy) throws IllegalTaskException {
+        strategy = StringUtils.isEmpty(strategy) ? xAsyncTaskProperties.getDefaultStrategy() : strategy;
+        XAsyncTaskStorage xAsyncTaskStorage = asyncTaskStorageMap.get(strategy);
+        if (xAsyncTaskStorage == null){
+            throw new IllegalTaskException(MessageFormat.format("XAsync不支持或没有启用【{0}】策略" ,strategy));
+        }
+        return xAsyncTaskStorage;
+    }
+
     @Override
-    public void execute(TaskMateData taskMateData) throws TaskExecuteException, IllegalTaskException
+    public void execute(TaskMateData taskMateData ,TaskExecuteParam executeParam) throws TaskExecuteException, IllegalTaskException
     {
         log.debug("执行任务,{}" ,taskMateData);
         Object targetBean = getBean(taskMateData);
@@ -92,6 +112,8 @@ public class XAsyncTaskExecutorImpl implements XAsyncTaskExecutor, ApplicationCo
         Method targetMethod = null;
         boolean accessible = false;
         long startTimestamp = System.currentTimeMillis();
+        XAsyncTaskStorage xAsyncTaskStorage = getXAsyncTaskStorage(taskMateData.getStrategy());
+
         try {
             targetMethod = ReflectionUtils.findMethod(targetBean.getClass() ,
                     taskMateData.getMethodName(), argTypes);
@@ -106,16 +128,16 @@ public class XAsyncTaskExecutorImpl implements XAsyncTaskExecutor, ApplicationCo
             }
             XAsyncContent.executing();
             targetMethod.invoke(targetBean ,argValues);
-            log.debug("任务执行成功，{}" ,taskMateData);
-            asyncTaskStorage.remove(taskMateData.getTaskId());
+            log.debug("任务执行成功，{}" ,taskMateData.getTaskId());
+            xAsyncTaskStorage.remove(taskMateData.getTaskId());
         } catch (IllegalAccessException e) {
             log.error("任务无法执行,{}" ,taskMateData ,e);
-            asyncTaskStorage.remove(taskMateData.getTaskId());
+            xAsyncTaskStorage.remove(taskMateData.getTaskId());
             throw new IllegalTaskException(MessageFormat.format(
                     "任务无法执行,{0}" ,taskMateData) ,e);
         } catch (IllegalTaskException e){
             log.error("非法的任务定义，任务无法执行,{}" ,taskMateData ,e);
-            asyncTaskStorage.remove(taskMateData.getTaskId());
+            xAsyncTaskStorage.remove(taskMateData.getTaskId());
             throw e;
         }catch (Exception e){
             String errorMsg = MessageFormat.format("异步任务执行失败，{0}", taskMateData);
@@ -126,7 +148,7 @@ public class XAsyncTaskExecutorImpl implements XAsyncTaskExecutor, ApplicationCo
             if (targetMethod != null && !accessible){
                 targetMethod.setAccessible(false);
             }
-            log.info("任务{}耗时{}毫秒" ,taskMateData ,System.currentTimeMillis() - startTimestamp);
+            log.info("任务{}耗时{}毫秒" ,taskMateData.getTaskId() ,System.currentTimeMillis() - startTimestamp);
             XAsyncContent.complete();
         }
     }
@@ -137,21 +159,21 @@ public class XAsyncTaskExecutorImpl implements XAsyncTaskExecutor, ApplicationCo
         if (!isImplement && argType.isPrimitive()){
             //兼容基本类型
             if (boolean.class.equals(argType) && argValue instanceof Boolean){
-                isImplement = true;
+                return true;
             } else if (byte.class.equals(argType) && argValue instanceof Byte){
-                isImplement = true;
+                return true;
             } else if (char.class.equals(argType) && argValue instanceof Character){
-                isImplement = true;
+                return true;
             } else if (short.class.equals(argType) && argValue instanceof Short){
-                isImplement = true;
+                return true;
             } else if (int.class.equals(argType) && argValue instanceof Integer){
-                isImplement = true;
+                return true;
             } else if (float.class.equals(argType) && argValue instanceof Float){
-                isImplement = true;
+                return true;
             } else if (long.class.equals(argType) && argValue instanceof Long){
-                isImplement = true;
+                return true;
             } else if (double.class.equals(argType) && argValue instanceof Double){
-                isImplement = true;
+                return true;
             }
         }
 

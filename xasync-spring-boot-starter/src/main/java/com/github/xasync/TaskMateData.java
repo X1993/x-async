@@ -4,7 +4,6 @@ import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.experimental.FieldDefaults;
-
 import java.io.Serializable;
 import java.lang.reflect.Parameter;
 
@@ -17,6 +16,11 @@ import java.lang.reflect.Parameter;
 @Accessors(chain = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class TaskMateData implements Serializable {
+
+    /**
+     * 任务保存策略
+     */
+    String strategy;
 
     /**
      * 任务id

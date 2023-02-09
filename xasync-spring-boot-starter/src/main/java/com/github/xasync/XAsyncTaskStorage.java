@@ -11,6 +11,12 @@ import com.github.xasync.exception.TaskSaveException;
 public interface XAsyncTaskStorage {
 
     /**
+     * 唯一标识，多个存储器不能冲突
+     * @return
+     */
+    String code();
+
+    /**
      * 保存任务信息
      * @param taskMateData
      * @throws TaskSaveException

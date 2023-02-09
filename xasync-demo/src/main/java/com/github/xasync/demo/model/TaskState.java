@@ -1,7 +1,6 @@
 package com.github.xasync.demo.model;
 
 import lombok.Data;
-
 import java.time.LocalDateTime;
 
 /**
@@ -31,5 +30,4 @@ public class TaskState {
      * 异步任务完成时间
      */
     private LocalDateTime completedDateTime;
-
 }

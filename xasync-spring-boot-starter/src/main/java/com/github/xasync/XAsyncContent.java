@@ -11,6 +11,8 @@ public class XAsyncContent {
 
     public final static String X_ASYNC_STRATEGY = X_ASYNC + ".strategy";
 
+    public final static String X_ASYNC_CONFIG = X_ASYNC + ".config";
+
     /**
      * 异步方法是否处于执行阶段
      */

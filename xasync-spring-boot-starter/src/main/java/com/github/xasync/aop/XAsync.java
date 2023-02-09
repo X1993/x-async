@@ -1,5 +1,7 @@
 package com.github.xasync.aop;
 
+import com.github.xasync.XAsyncTaskStorage;
+
 import java.lang.annotation.*;
 
 /**
@@ -19,6 +21,13 @@ public @interface XAsync {
      * @return
      */
     boolean trySync() default true;
+
+    /**
+     * 任务保存策略
+     * @see XAsyncTaskStorage#code() 匹配
+     * @return
+     */
+    String strategy() default "";
 
     /**
      * 异步任务id

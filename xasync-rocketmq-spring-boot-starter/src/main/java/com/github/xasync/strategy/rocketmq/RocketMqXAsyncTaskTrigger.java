@@ -20,8 +20,8 @@ import static com.github.xasync.strategy.rocketmq.RocketMqXAsyncTaskConfiguratio
  * @description
  */
 @RocketMQMessageListener(
-        consumerGroup = RocketMqXAsyncTaskProperties.CONSUMER_GROUP ,
-        topic = RocketMqXAsyncTaskProperties.TOPIC)
+        consumerGroup = RocketMqXAsyncTaskProperties.CONSUMER_GROUP_REF ,
+        topic = RocketMqXAsyncTaskProperties.TOPIC_REF)
 @Slf4j
 public class RocketMqXAsyncTaskTrigger implements XAsyncTaskTrigger, RocketMQListener<String>{
 

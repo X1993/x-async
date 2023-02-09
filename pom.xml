@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.X1993</groupId>
-    <artifactId>x-async</artifactId>
+    <artifactId>xasync-spring-boot-starter</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
     <packaging>pom</packaging>

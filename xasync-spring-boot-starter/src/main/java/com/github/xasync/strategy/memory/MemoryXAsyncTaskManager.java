@@ -32,15 +32,20 @@ public class MemoryXAsyncTaskManager implements XAsyncTaskStorage, XAsyncTaskTri
 
     private final ScheduledExecutorService scheduledExecutorService;
 
-    private final MemoryXAsyncTaskProperties properties;
+    private final MemoryXAsyncTaskProperties memoryXAsyncTaskProperties;
 
     public MemoryXAsyncTaskManager(XAsyncTaskExecutor xAsyncTaskExecutor,
                                    ScheduledExecutorService scheduledExecutorService,
-                                   MemoryXAsyncTaskProperties properties)
+                                   MemoryXAsyncTaskProperties memoryXAsyncTaskProperties)
     {
         this.xAsyncTaskExecutor = xAsyncTaskExecutor;
         this.scheduledExecutorService = scheduledExecutorService;
-        this.properties = properties;
+        this.memoryXAsyncTaskProperties = memoryXAsyncTaskProperties;
+    }
+
+    @Override
+    public String code() {
+        return MemoryXAsyncTaskConfiguration.MEMORY;
     }
 
     @Override
@@ -58,12 +63,16 @@ public class MemoryXAsyncTaskManager implements XAsyncTaskStorage, XAsyncTaskTri
 
         ScheduledFuture<?> scheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(
                 () -> run(taskMateData),
-                properties.getInitialDelayMS(),
-                properties.getPeriodMS(),
+                memoryXAsyncTaskProperties.getInitialDelayMS(),
+                memoryXAsyncTaskProperties.getPeriodMS(),
                 TimeUnit.MILLISECONDS);
 
         savedTaskState.setScheduledFuture(scheduledFuture);
-        log.debug("成功保存异步任务{}，当前有{}个未完成任务" ,taskMateData ,taskStateMap.size());
+        log.debug("为异步任务{}注册定时任务,初始延迟{}毫秒,重试间隔{}毫秒，当前有{}个未完成任务" ,
+                taskMateData ,
+                memoryXAsyncTaskProperties.getInitialDelayMS() ,
+                memoryXAsyncTaskProperties.getPeriodMS() ,
+                taskStateMap.size());
     }
 
     @Override
@@ -72,7 +81,7 @@ public class MemoryXAsyncTaskManager implements XAsyncTaskStorage, XAsyncTaskTri
         TaskContent taskState = taskStateMap.remove(taskId);
         if (taskState != null && taskState.getScheduledFuture() != null){
             taskState.getScheduledFuture().cancel(false);
-            log.debug("移除异步任务,{},总耗时{}毫秒" ,taskState ,System.currentTimeMillis() - taskState.getCreateTimestamp());
+            log.debug("移除异步任务,{},任务总耗时{}毫秒" ,taskId ,System.currentTimeMillis() - taskState.getCreateTimestamp());
         }
     }
 
@@ -83,18 +92,20 @@ public class MemoryXAsyncTaskManager implements XAsyncTaskStorage, XAsyncTaskTri
             xAsyncTaskExecutor.execute(taskMateData);
         } catch (IllegalTaskException e){
             //无法执行的任务，没有重试的必要
+            log.error("非法的任务定义，任务无法执行,{}" ,taskMateData ,e);
             remove(taskId);
         } catch (TaskExecuteException e) {
             TaskContent taskContent = taskStateMap.get(taskId);
             if (taskContent != null){
                 int currentFailCount = taskContent.getFailCount().incrementAndGet();
                 log.warn("任务{}异步执行失败{}次" ,taskId ,currentFailCount);
-                if (currentFailCount >= properties.getMaxExecuteCount()){
-                    log.warn("任务{}异步执行次数达到最大值{}，取消" ,taskId ,properties.getMaxExecuteCount());
+                if (currentFailCount >= memoryXAsyncTaskProperties.getMaxExecuteCount()){
+                    log.warn("任务{}异步执行次数达到最大值{}，取消" ,taskId , memoryXAsyncTaskProperties.getMaxExecuteCount());
                     remove(taskId);
                 }
             }
         } catch (Exception e){
+            log.error("任务执行失败");
             remove(taskId);
         }
     }
