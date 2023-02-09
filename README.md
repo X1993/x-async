@@ -11,5 +11,8 @@
 |-- xasyc-rocketmq-spring-boot-starter    ➜ 基于rocketmq实现任务的持久化和重试
 |-- xasyc-demo                            ➜ 演示服务
 ```
-[xasyc-spring-boot-starter快速开始](./xasyc-spring-boot-starter/README.md)
-[xasyc-spring-boot-starter快速开始](./xasyc-rocketmq-spring-boot-starter/README.md)
+
+[xasyc-spring-boot-starter快速开始](./xasyc-spring-boot-starter)
+
+
+[xasyc-spring-boot-starter快速开始](./xasyc-rocketmq-spring-boot-starter)
