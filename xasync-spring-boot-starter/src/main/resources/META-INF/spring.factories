@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration:\
+com.github.xasync.XAsyncTaskConfiguration,\
+com.github.xasync.strategy.memory.MemoryXAsyncTaskConfiguration
