@@ -36,42 +36,7 @@ x-async:
   #使用rocketmq保存任务
   strategy-rocketmq:
     #开关，默认开启
-    enable: false
-    config:
-      #保存任务的主题,有默认值
-      topic: x-async-task-test0
-      #消息的tag，有默认值
-      tag: all
-      #消费者组，有默认值
-      consumer-group: ${spring.application.name}
-spring:
-  profiles:
-    active: ${ENVIRONMENT:dev}
-  application:
-    name: xasync-demo
-
-logging:
-  level:
-    root: debug
-
-x-async:
-  #使用内存保存任务
-  strategy-memory:
-    #开关，默认值：true
     enable: true
-    config:
-      #异步任务执行线程池核心线程数，有默认值
-      core-pool-size: 3
-      #最大执行次数，有默认值
-      max-execute-count: 3
-      #异步重试间隔，单位毫秒，有默认值
-      period-ms: 1000
-      #异步任务提交后延迟执行时间，单位毫秒，有默认值
-      initial_delay_ms: 100
-  #使用rocketmq保存任务
-  strategy-rocketmq:
-    #开关，默认开启
-    enable: false
     config:
       #保存任务的主题,有默认值
       topic: x-async-task-test0
@@ -102,18 +67,27 @@ rocketmq:
 
 ```
 
-##### 3. 在方法上添加注解
+##### 3. 标注异步方法
 
 ```java
     import com.github.xasync.aop.XAsync;
     import org.springframework.stereotype.Component;
-
+    import static com.github.xasync.strategy.memory.MemoryXAsyncTaskConfiguration.MEMORY;
+    import static com.github.xasync.strategy.rocketmq.RocketMqXAsyncTaskConfiguration.ROCKETMQ;
+    
     public interface Service {
     
+        //标记在接口方法上
         @XAsync(strategy = MEMORY)
         void method0(String param0, int param1);
     
         void method1(String param0, int param1);
+    
+        //标记在接口方法上
+        @XAsync(strategy = ROCKETMQ)
+        void method2(String param0, int param1);
+    
+        void method3(String param0, int param1);
     
     }
     
@@ -122,11 +96,18 @@ rocketmq:
     
         void method0(String param0, int param1);
     
+        //标记在实现类方法上
         @XAsync(strategy = MEMORY)
         void method1(String param0, int param1);
+
+        void method2(String param0, int param1);
+
+        //标记在实现类方法上
+        @XAsync(strategy = ROCKETMQ)
+        void method3(String param0, int param1);
     
     }
-
+    
     @Target(ElementType.METHOD)
     @Retention(RetentionPolicy.RUNTIME)
     @Documented

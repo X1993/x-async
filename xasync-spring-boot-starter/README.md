@@ -35,14 +35,16 @@ x-async:
       initial_delay_ms: 100
 ```
 
-##### 3. 在方法上添加注解
+##### 3. 标注异步方法
 
 ```java
     import com.github.xasync.aop.XAsync;
     import org.springframework.stereotype.Component;
-
+    import static com.github.xasync.strategy.memory.MemoryXAsyncTaskConfiguration.MEMORY;
+    
     public interface Service {
     
+        //标记在接口方法上
         @XAsync(strategy = MEMORY)
         void method0(String param0, int param1);
     
@@ -55,6 +57,7 @@ x-async:
     
         void method0(String param0, int param1);
     
+        //标记在实现类方法上
         @XAsync(strategy = MEMORY)
         void method1(String param0, int param1);
     
